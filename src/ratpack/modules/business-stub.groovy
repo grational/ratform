@@ -87,6 +87,14 @@ ratpack {
 								// select data and grep just calls and directions
 								NativeHandlers.Parsers.json(config, resp)
 								.response.data  // select sub section
+								.groupBy { it.day }
+								.collect { date, actions -> // rationalize content in the form [ calls: #, directions: #, clicks: # ]
+									def actionMap = actions.collectEntries {
+										def action = it.customer_action_type.toLowerCase().find(/\S+$/) // take the latest word
+										[ (action): it.'Google Customer Actions' ]
+									}
+									actionMap << [ day: date ]
+								}
 							}
 						}.post() {
 							request.uri.path  = "/v2/accounts/${customer}/analytics/reports"
@@ -98,6 +106,7 @@ ratpack {
 					def row = pair.left
 					def data  = pair.right
 					data.sort { a,b -> b.day <=> a.day }
+					println "data -> $data"
 					render(
 						groovyMarkupTemplate([
 							title:  "Google Actions",

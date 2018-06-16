@@ -38,14 +38,16 @@ html {
 		table {
 			tr {
 				th('day')
-				th('lead')
-				th('number')
+				th('calls')
+				th('directions')
+				th('website clicks')
 			}
-			actions.each { action ->
+			actions.each { entry ->
 				tr {
-					td(action.day)
-					td(action.customer_action_type)
-					td(action.'Google Customer Actions')
+					td(entry.day)
+					td(entry.calls)
+					td(entry.directions)
+					td(entry.clicks)
 				}
 			}
 		}
