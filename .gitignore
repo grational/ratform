@@ -1,8 +1,9 @@
 # Created with 'gigawatt' using the API of https://www.gitignore.io #
 # @parameters: groovy gradle vim sublimetext linux osx
 
-
-#!! ERROR: groovy is undefined. Use list command to see defined gitignore types !!#
+### Custom ###
+rsc/
+conf/
 
 ### Linux ###
 *~
