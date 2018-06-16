@@ -12,6 +12,9 @@ ratpack {
 	// external file conf
 	include 'modules/server-config.groovy'
 
+	// hikari and markup server bindings
+	include 'modules/server-bindings.groovy'
+
 	// fake business logic module
 	include 'modules/business-stub.groovy'
 

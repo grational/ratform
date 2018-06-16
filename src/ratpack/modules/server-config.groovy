@@ -18,10 +18,13 @@
 // external
 import static ratpack.groovy.Groovy.ratpack
 // internal
+import it.italiaonline.grational.ratpack.conf.YextApi
+import it.italiaonline.grational.ratpack.conf.IolconnectDb
 
 ratpack {
 	serverConfig {
 		env()
-		//require("/yext/api", YextApi)
+		require('/yext/api', YextApi)
+		require('/iolconnect/db', IolconnectDb)
 	}
 }

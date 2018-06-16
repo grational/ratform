@@ -7,9 +7,9 @@
 // [plugins] this block must be the first
 plugins {
 	// support for groovy in ratpack
-	id 'io.ratpack.ratpack-groovy' version '1.4.6'
-	// create fatjar to distribute easily the artifact
-	id 'com.github.johnrengelman.shadow' version '2.0.0'
+	id 'io.ratpack.ratpack-groovy' version '1.5.4'
+	// finally! tag version is software version!
+	id 'pl.allegro.tech.build.axion-release' version '1.9.0'
 }
 
 // [general] configuration
@@ -18,11 +18,13 @@ project.ext {
 	gradleVersion = '4.8'
 	spockVersion  = '1.1-groovy-2.4'
 	slf4jVersion  = '1.7.25'
+	mysqlVersion  = '8.0.11'
+	oracleVersion = '12.1.0.2'
 }
 
 project.with {
 	//project.name is set in the settings.gradle with rootProject.name
-	version               "0.1.0-SNAPSHOT" // (remove -SNAPSHOT for releases)
+	version               scmVersion.version
 	description           "A 'gigawatt' powered project."
 	wrapper.gradleVersion "$gradleVersion"
 	defaultTasks          'run'
@@ -41,6 +43,13 @@ repositories {
 dependencies {
 	// Slf4j dependencies to print out to the console
 	compile "org.slf4j:slf4j-simple:$slf4jVersion"
+
+	// DB Pool Hikari (shipped with ratpack, java8 version)
+	compile ratpack.dependency('hikari')
+	// Mysql JDBC Driver
+	compile "mysql:mysql-connector-java:$mysqlVersion"
+	// Mysql JDBC Driver
+	compile "mysql:mysql-connector-java:$mysqlVersion"
 
 	// We use the awesome Spock testing and specification framework
 	testCompile "org.spockframework:spock-core:$spockVersion"

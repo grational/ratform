@@ -1,0 +1,44 @@
+/* title */
+.header img {
+  float: left;
+  right-padding: 10px;
+}
+
+.header h1 {
+  position: relative;
+  top: 18px;
+  left: 10px;
+}
+
+/* input form */
+.form-fields {
+  display: table;
+}
+
+.form-field {
+  display: table-row;
+}
+
+.form-field-label,
+.form-field-control,
+.form-field-comment {
+  display: table-cell;
+  padding: 3px 10px;
+}
+
+/* output table */
+table {
+	font-family: arial, sans-serif;
+	border-collapse: collapse;
+	width: 50%;
+}
+
+td, th {
+	border: 1px solid #dddddd;
+	text-align: left;
+	padding: 8px;
+}
+
+tr:nth-child(even) {
+	background-color: #dddddd;
+}
