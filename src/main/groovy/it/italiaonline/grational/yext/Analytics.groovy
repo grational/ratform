@@ -2,6 +2,7 @@ package it.italiaonline.grational.yext
 
 import it.italiaonline.grational.ratpack.conf.YextApi
 
+@groovy.transform.ToString(includeNames=true)
 class Analytics {
 	String  customer
 	String  start
@@ -12,20 +13,19 @@ class Analytics {
 		this.api.url.find('(?<=//)[^/]+')
 	}
 
-	URI uri() {
-		def endpoint = "accounts/${customer}/analytics/reports"
-		// api url
-		def now    = new Date()
-		def params = [
-			api_key: api.key,
-			v:       now.format('yyyyMMdd')
-		]
-		def qstring = params.collect { k, v -> "$k=$v" }.join('&')
-		return "${this.api.url}/${endpoint}?${qstring}".toURI()
+	String endpoint() {
+		"v2/accounts/${this.customer}/analytics/reports"
 	}
 
-	Map payload() {
-		return [
+	Map qparams() {
+		[
+			api_key: api.key,
+			v:       new Date().format('yyyyMMdd')
+		]
+	}
+
+	Map body() {
+		[
 			filters: [
 				startDate: this.start,
 				endDate:   this.end

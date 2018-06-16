@@ -16,10 +16,6 @@ plugins {
 project.ext {
 	groovyVersion = '2.5.0'
 	gradleVersion = '4.8'
-	spockVersion  = '1.1-groovy-2.4'
-	slf4jVersion  = '1.7.25'
-	mysqlVersion  = '8.0.11'
-	oracleVersion = '12.1.0.2'
 }
 
 project.with {
@@ -42,17 +38,17 @@ repositories {
 
 dependencies {
 	// Slf4j dependencies to print out to the console
-	compile "org.slf4j:slf4j-simple:$slf4jVersion"
+	compile 'org.slf4j:slf4j-simple:1.7.25'
 
 	// DB Pool Hikari (shipped with ratpack, java8 version)
 	compile ratpack.dependency('hikari')
 	// Mysql JDBC Driver
-	compile "mysql:mysql-connector-java:$mysqlVersion"
-	// Mysql JDBC Driver
-	compile "mysql:mysql-connector-java:$mysqlVersion"
+	compile 'mysql:mysql-connector-java:8.0.11'
+	// http builder ng
+	runtime 'io.github.http-builder-ng:http-builder-ng-core:1.0.3'
 
 	// We use the awesome Spock testing and specification framework
-	testCompile "org.spockframework:spock-core:$spockVersion"
+	testCompile 'org.spockframework:spock-core:1.1-groovy-2.4'
 }
 
 // vim: ft=groovy:fdm=indent

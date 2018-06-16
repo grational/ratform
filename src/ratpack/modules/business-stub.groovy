@@ -18,8 +18,13 @@ import ratpack.hikari.HikariModule
 import com.zaxxer.hikari.HikariConfig
 import ratpack.groovy.sql.SqlModule
 import ratpack.exec.Blocking
+// query rest with proxy
+import static groovyx.net.http.HttpBuilder.configure
+import static groovyx.net.http.ContentTypes.JSON
+import groovyx.net.http.*
 // local
 import it.italiaonline.grational.yext.Analytics
+import it.italiaonline.grational.ratpack.conf.Proxy
 import it.italiaonline.grational.ratpack.conf.YextApi
 import it.italiaonline.grational.ratpack.conf.IolconnectDb
 
@@ -40,7 +45,7 @@ ratpack {
 				)
 			}
 
-			get('result') { HttpClient httpClient, YextApi api, Sql iolconnectDb ->
+			get('result') { HttpClient httpClient, YextApi api, Sql iolconnectDb, Proxy proxy ->
 				def qp = request.queryParams
 
 				Blocking.get {
@@ -53,38 +58,58 @@ ratpack {
 						| from BOZZA b
 						| left join STATI_BOZZA sb on b.ID_STATO = sb.ID_STATO
 						| where b.CC_IDB = '${qp.id}'""".stripMargin())
-				} then { row ->
+				} flatRight { row ->
 					// increase of one day because the upper interval is open
-					def end = (Date.parse('yyyy-MM-dd',qp.end) + 1)
-				          	.format('yyyy-MM-dd')
+					def end = (Date.parse('yyyy-MM-dd',qp.end) + 1).format('yyyy-MM-dd')
+					def customer = row.id
 					def analytics = new Analytics (
-						customer: row.id,
+						customer: customer,
 						start:    qp.start,
 						end:      end,
 						api:      api
 					)
+					
+					Blocking.get {
+						configure {
+							if (proxy.enabled()) {
+								execution.proxy(
+									proxy.host,
+									proxy.port,
+									java.net.Proxy.Type.HTTP,
+									true
+								)
+							}
 
-					httpClient.post(analytics.uri()) { s ->
-						s.headers.set('Host', analytics.hostname())
-						s.headers.set('Content-Type', 'application/json')
-						s.body.text(toJson(analytics.payload()))
-					}.then { output ->
-						assert output.statusCode == 200
-						def ga = new JsonSlurper().parseText(output.body.text)
-						ga.response.data.sort { a,b -> b.day <=> a.day }
-						render(
-							groovyMarkupTemplate([
-								title:  "Google Actions",
-								period: "${qp.start} / ${qp.end}",
-								actions: ga.response.data,
-								name:    row.name,
-								id:      row.id,
-								bozza:   row.bozza,
-								state:   row.state ],
-								"output.gtpl"
-							)
-						)
+							request.uri         = api.url
+							request.contentType = JSON.first() // 'application/json'
+						
+							response.parser(JSON.first()) { config, resp ->
+								// select data and grep just calls and directions
+								NativeHandlers.Parsers.json(config, resp)
+								.response.data  // select sub section
+							}
+						}.post() {
+							request.uri.path  = "/v2/accounts/${customer}/analytics/reports"
+							request.uri.query = analytics.qparams()
+							request.body      = analytics.body()
+						}
 					}
+				} then { pair ->
+					def row = pair.left
+					def data  = pair.right
+					data.sort { a,b -> b.day <=> a.day }
+					render(
+						groovyMarkupTemplate([
+							title:  "Google Actions",
+							period: "${qp.start} / ${qp.end}",
+							actions: data,
+							name:    row.name,
+							id:      row.id,
+							bozza:   row.bozza,
+							state:   row.state ],
+							"output.gtpl"
+						)
+					)
 				} // then
 			} // get('result')
 		} // prefix
