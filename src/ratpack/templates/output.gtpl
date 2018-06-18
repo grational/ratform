@@ -22,6 +22,10 @@ html {
 				td(period)
 			}
 			tr {
+				th('Dati Yext disponibili fino al')
+				td(maxdate)
+			}
+			tr {
 				th('ID customer Yext')
 				td(id)
 			}

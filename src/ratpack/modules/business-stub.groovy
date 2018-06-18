@@ -13,7 +13,6 @@ import java.util.Properties
 import static ratpack.groovy.Groovy.ratpack
 import ratpack.groovy.template.MarkupTemplateModule
 import static ratpack.groovy.Groovy.groovyMarkupTemplate
-import ratpack.http.client.HttpClient
 import ratpack.hikari.HikariModule
 import com.zaxxer.hikari.HikariConfig
 import ratpack.groovy.sql.SqlModule
@@ -33,19 +32,52 @@ ratpack {
 	handlers {
 		files { dir('static') }
 		prefix('support/yext/google/actions') {
-			get ('query') {
-				render(
-					groovyMarkupTemplate([
-							title: "Query Yext for Google Actions",
-							start: "2018-01-01",
-							end:   "2018-06-04"
-						],
-						"form.gtpl"
-					)
-				)
-			}
+			get ('query') { YextApi api, Proxy proxy ->
+				// retrieve the maxDate for the yext analytics
+				Blocking.get {
+					configure {
+						if (proxy.enabled()) {
+							execution.proxy(
+								proxy.host,
+								proxy.port,
+								java.net.Proxy.Type.HTTP,
+								true
+							)
+						}
 
-			get('result') { HttpClient httpClient, YextApi api, Sql iolconnectDb, Proxy proxy ->
+						request.uri         = api.url
+						request.contentType = JSON.first() // 'application/json'
+						response.parser(JSON.first()) { config, resp ->
+							NativeHandlers.Parsers.json(config, resp)
+							.response
+							.standardMaxDate
+						}
+					}.get() {
+							request.uri.path  = "/v2/accounts/all/analytics/maxdates"
+							request.uri.query = [
+							                      api_key: api.key,
+							                      v:       new Date().format('yyyyMMdd')
+							                    ]
+					}
+				} then { maxDate ->
+					use (groovy.time.TimeCategory) {
+						def max = Date.parse('yyyy-MM-dd',maxDate)
+						def min = max - 1.months
+						render(
+							groovyMarkupTemplate([
+									title: 'Query Yext for Google Actions',
+									start: min.format('yyyy-MM-dd'),
+									end:   max.format('yyyy-MM-dd'),
+									max:   max.format('yyyy-MM-dd')
+								],
+								"form.gtpl"
+							)
+						)
+					} // TimeCategory
+				} // then
+			} // get('query')
+
+			get('result') { YextApi api, Sql iolconnectDb, Proxy proxy ->
 				def qp = request.queryParams
 
 				Blocking.get {
@@ -111,6 +143,7 @@ ratpack {
 						groovyMarkupTemplate([
 							title:  "Google Actions",
 							period: "${qp.start} / ${qp.end}",
+							maxdate: qp.maxdate,
 							actions: data,
 							name:    row.name,
 							id:      row.id,

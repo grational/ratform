@@ -30,9 +30,11 @@ html {
 					label (class: 'form-field-label', for:'start', 'Start date')
 					div   (class: 'form-field-control') {
 						input (
-							name:'start',
-							type:'date',
-							required:''
+							name:     'start',
+							type:     'date',
+							value:    start,
+							max:      max,
+							required: ''
 						)
 					}
 					div   (class: 'form-field-comment', 'Required')
@@ -41,12 +43,21 @@ html {
 					label (class: 'form-field-label', for:'end', 'End date')
 					div   (class: 'form-field-control') {
 						input (
-							name:'end',
-							type:'date',
-							required:''
+							name:     'end',
+							type:     'date',
+							value:    end,
+							max:      max,
+							required: ''
 						)
 					}
 					div   (class: 'form-field-comment', 'Required')
+				}
+				div(class: 'form-field') {
+					input (
+						type: 'hidden',
+						name: 'maxdate',
+						value: max
+					)
 				}
 				div(class: 'form-field') {
 					div   (class: 'form-field-control') {
@@ -56,6 +67,10 @@ html {
 						)
 					}
 				}
+			} // form-fields
+			p {
+				strong('NOTA: ')
+				yield "dati Yext disponibili fino al ${max}"
 			}
 		}
 	}
