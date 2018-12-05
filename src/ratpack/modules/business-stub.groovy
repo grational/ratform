@@ -55,7 +55,7 @@ ratpack {
 					}.get() {
 							request.uri.path  = "/v2/accounts/all/analytics/maxdates"
 							request.uri.query = [
-							                      api_key: api.key,
+							                      api_key: api.key.v2,
 							                      v:       new Date().format('yyyyMMdd')
 							                    ]
 					}
@@ -117,7 +117,9 @@ ratpack {
 						
 							response.parser(JSON.first()) { config, resp ->
 								// select data and grep just calls and directions
-								NativeHandlers.Parsers.json(config, resp)
+								def json = NativeHandlers.Parsers.json(config, resp)
+								println "json -> $json"
+								json
 								.response.data  // select sub section
 								.groupBy { it.day }
 								.collect { date, actions -> // rationalize content in the form [ calls: #, directions: #, clicks: # ]

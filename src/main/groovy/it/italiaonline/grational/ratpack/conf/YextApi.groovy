@@ -1,7 +1,18 @@
 package it.italiaonline.grational.ratpack.conf
 
-@groovy.transform.ToString(includeNames=true)
-class YextApi {
-	String url
-	String key
+import com.fasterxml.jackson.annotation.JsonProperty
+
+final class YextApi {
+	private final String url
+	private final Map    key
+
+	YextApi (
+		@JsonProperty(value="url", required=true)
+		String url,
+		@JsonProperty(value="key", required=true)
+		Map    key
+	) {
+		this.url = url
+		this.key = key
+	}
 }

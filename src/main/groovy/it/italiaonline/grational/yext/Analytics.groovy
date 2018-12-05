@@ -19,7 +19,7 @@ class Analytics {
 
 	Map qparams() {
 		[
-			api_key: api.key,
+			api_key: api.key.v2,
 			v:       new Date().format('yyyyMMdd')
 		]
 	}
