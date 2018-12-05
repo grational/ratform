@@ -55,7 +55,7 @@ ratpack {
 					}.get() {
 							request.uri.path  = "/v2/accounts/all/analytics/maxdates"
 							request.uri.query = [
-							                      api_key: api.key,
+							                      api_key: api.key.v2,
 							                      v:       new Date().format('yyyyMMdd')
 							                    ]
 					}
