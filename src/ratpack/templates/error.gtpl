@@ -15,7 +15,7 @@ html {
 		if (cc)      p("No customer found for the cc '${cc}'")
 		if (draftId) p("No details found for the draftId '${draftId}' in the Iolconnect database")
 		p {
-			a(href:'javascript:history.back()') { yield 'back' }
+			a(href:'query') { yield 'new search' }
 		}
 	}
 }

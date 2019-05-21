@@ -25,7 +25,6 @@ import groovyx.net.http.*
 import it.italiaonline.grational.yext.Analytics
 import it.italiaonline.grational.ratpack.conf.Proxy
 import it.italiaonline.grational.ratpack.conf.YextApi
-import it.italiaonline.grational.ratpack.conf.IppiDb
 import it.italiaonline.grational.ratpack.conf.IolapiDb
 
 ratpack {
@@ -78,7 +77,7 @@ ratpack {
 				} // then
 			} // get('query')
 
-			get('result') { YextApi api, Sql iolapiDb, Sql ippiDb, Proxy proxy ->
+			get('result') { YextApi api, Sql iolapiDb, Proxy proxy ->
 				def qp = request.queryParams
 
 				Blocking.get {
@@ -181,14 +180,14 @@ ratpack {
 						println "data -> $data"
 						render(
 							groovyMarkupTemplate([
-								title:  "Google Actions",
-								period: "${qp.start} / ${qp.end}",
-								maxdate: qp.maxdate,
-								actions: data,
-								name:    row.name,
-								id:      row.id,
-								bozza:   draftId,
-								state:   row.state ],
+								title:      "Google Actions",
+								period:     "${qp.start} / ${qp.end}",
+								maxdate:    qp.maxdate,
+								actions:    data,
+								name:       row.name,
+								id:         row.id,
+								bozza:      draftId,
+								state:      row.state ],
 								"output.gtpl"
 							)
 						)

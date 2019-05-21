@@ -21,14 +21,6 @@ html {
 				td(name)
 			}
 			tr {
-				th('Periodo')
-				td(period)
-			}
-			tr {
-				th('Dati Yext disponibili fino al')
-				td(maxdate)
-			}
-			tr {
 				th('ID customer Yext')
 				td(id)
 			}
@@ -40,17 +32,42 @@ html {
 				th('Stato bozza')
 				td(state)
 			}
+			tr {
+				th('Periodo')
+				td(period)
+			}
+			tr {
+				th('Total calls')
+				td(actions.calls.sum())
+			}
+			tr {
+				th('Total directions')
+				td(actions.directions.sum())
+			}
+			tr {
+				th('Total website clicks')
+				td(actions.clicks.sum())
+			}
+			tr {
+				th('Dati Yext disponibili fino al')
+				td(maxdate)
+			}
 		}
 		hr()
+		p {
+			h3('Details')
+		}
 		table {
 			tr {
-				th('day')
-				th('calls')
-				th('directions')
-				th('website clicks')
+				th("row (#${actions.size()})")
+				th("day")
+				th("calls")
+				th("directions")
+				th("website clicks")
 			}
-			actions.each { entry ->
+			actions.eachWithIndex { entry, idx ->
 				tr {
+					td(idx+1)
 					td(entry.day)
 					td(entry.calls)
 					td(entry.directions)
