@@ -25,7 +25,8 @@ import groovyx.net.http.*
 import it.italiaonline.grational.yext.Analytics
 import it.italiaonline.grational.ratpack.conf.Proxy
 import it.italiaonline.grational.ratpack.conf.YextApi
-import it.italiaonline.grational.ratpack.conf.IolconnectDb
+import it.italiaonline.grational.ratpack.conf.IppiDb
+import it.italiaonline.grational.ratpack.conf.IolapiDb
 
 ratpack {
 
@@ -77,84 +78,122 @@ ratpack {
 				} // then
 			} // get('query')
 
-			get('result') { YextApi api, Sql iolconnectDb, Proxy proxy ->
+			get('result') { YextApi api, Sql iolapiDb, Sql ippiDb, Proxy proxy ->
 				def qp = request.queryParams
 
 				Blocking.get {
-					iolconnectDb.firstRow("""
-						|select
-						|  b.ID_CUSTOMER id,
-						|  b.NAME        name,
-						|  b.ID_BOZZA    bozza,
-						|  sb.STATO      state
-						| from BOZZA b
-						| left join STATI_BOZZA sb on b.ID_STATO = sb.ID_STATO
-						| where b.CC_IDB = '${qp.id}'""".stripMargin())
-				} flatRight { row ->
-					// increase of one day because the upper interval is open
-					def end = (Date.parse('yyyy-MM-dd',qp.end) + 1).format('yyyy-MM-dd')
-					def customer = row.id
-					def analytics = new Analytics (
-						customer: customer,
-						start:    qp.start,
-						end:      end,
-						api:      api
-					)
+					configure {
+						if (proxy.enabled())
+							execution.proxy(
+								proxy.host,
+								proxy.port,
+								java.net.Proxy.Type.HTTP,
+								true
+							)
+						request.uri = "http://as-bo.pgol.net/ws-pg4you/rest/esb/getBoUnicoPg4you?cc=${qp.id}"
+						request.contentType = JSON.first() // 'application/json'
 					
-					Blocking.get {
-						configure {
-							if (proxy.enabled()) {
-								execution.proxy(
-									proxy.host,
-									proxy.port,
-									java.net.Proxy.Type.HTTP,
-									true
-								)
-							}
-
-							request.uri         = api.url
-							request.contentType = JSON.first() // 'application/json'
-						
-							response.parser(JSON.first()) { config, resp ->
-								// select data and grep just calls and directions
-								def json = NativeHandlers.Parsers.json(config, resp)
-								println "json -> $json"
-								json
-								.response.data  // select sub section
-								.groupBy { it.day }
-								.collect { date, actions -> // rationalize content in the form [ calls: #, directions: #, clicks: # ]
-									def actionMap = actions.collectEntries {
-										def action = it.customer_action_type.toLowerCase().find(/\S+$/) // take the latest word
-										[ (action): it.'Google Customer Actions' ]
-									}
-									actionMap << [ day: date ]
-								}
-							}
-						}.post() {
-							request.uri.path  = "/v2/accounts/${customer}/analytics/reports"
-							request.uri.query = analytics.qparams()
-							request.body      = analytics.body()
+						response.parser(JSON.first()) { config, resp ->
+							// select data and grep just calls and directions
+							def json = NativeHandlers.Parsers.json(config, resp)
+							println "json -> $json"
+							json.find { it.idBozza }?.idBozza?.tokenize('|').first()
 						}
-					}
-				} then { pair ->
-					def row = pair.left
-					def data  = pair.right
-					data.sort { a,b -> b.day <=> a.day }
-					println "data -> $data"
+					}.get()
+				} onError { Throwable t ->
 					render(
 						groovyMarkupTemplate([
-							title:  "Google Actions",
-							period: "${qp.start} / ${qp.end}",
-							maxdate: qp.maxdate,
-							actions: data,
-							name:    row.name,
-							id:      row.id,
-							bozza:   row.bozza,
-							state:   row.state ],
-							"output.gtpl"
+								cc:    qp.id,
+								title: 'Cannot find a draftId for the cc passed!'
+							],
+							'error.gtpl'
 						)
 					)
-				} // then
+				} then { draftId ->
+					Blocking.get {
+						iolapiDb.firstRow("""
+							|select b.ID_CUSTOMER          id,
+							|       b.NAME                 name,
+							|       yp.SUBSCRIPTION_STATUS state
+							|  from BOZZA b,
+							|       YEXT_PUBLISHER yp
+							| where b.ID_BOZZA = yp.ID_BOZZA
+							|   and b.ID_BOZZA = '${draftId}'""".stripMargin())
+					} onNull {
+						render(
+							groovyMarkupTemplate([
+									draftId: draftId,
+									title:   "Cannot find the draft details!"
+								],
+								'error.gtpl'
+							)
+						)
+					}flatRight { row ->
+						// increase of one day because the upper interval is open
+						def end = (Date.parse('yyyy-MM-dd',qp.end) + 1).format('yyyy-MM-dd')
+						def customer  = row.id
+						def analytics = new Analytics (
+							customer: customer,
+							start:    qp.start,
+							end:      end,
+							api:      api
+						)
+
+						Blocking.get {
+							configure {
+								if (proxy.enabled()) {
+									execution.proxy(
+										proxy.host,
+										proxy.port,
+										java.net.Proxy.Type.HTTP,
+										true
+									)
+								}
+
+								request.uri         = api.url
+								request.contentType = JSON.first() // 'application/json'
+							
+								response.parser(JSON.first()) { config, resp ->
+									// select data and grep just calls and directions
+									def json = NativeHandlers.Parsers.json(config, resp)
+									println "json -> $json"
+									json
+									.response.data  // select sub section
+									.groupBy { it.day }
+									.collect { date, actions -> // rationalize content in the form [ calls: #, directions: #, clicks: # ]
+										def actionMap = actions.collectEntries {
+											def action = it.customer_action_type.toLowerCase().find(/\S+$/) // take the latest word
+											[ (action): it.'Google Customer Actions' ]
+										}
+										actionMap << [ day: date ]
+									}
+								}
+							}.post() {
+								request.uri.path  = "/v2/accounts/${customer}/analytics/reports"
+								request.uri.query = analytics.qparams()
+								request.body      = analytics.body()
+							}
+						}
+					} then { pair ->
+						def row  = pair.left
+						def data = pair.right
+						data.sort { a,b -> b.day <=> a.day }
+						println "data -> $data"
+						render(
+							groovyMarkupTemplate([
+								title:  "Google Actions",
+								period: "${qp.start} / ${qp.end}",
+								maxdate: qp.maxdate,
+								actions: data,
+								name:    row.name,
+								id:      row.id,
+								bozza:   draftId,
+								state:   row.state ],
+								"output.gtpl"
+							)
+						)
+					} // then with a pair
+				} // then with a draft id
 			} // get('result')
 		} // prefix
 	} // handlers 

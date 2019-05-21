@@ -31,7 +31,7 @@ ratpack {
 			c.autoNewLine = true
 			c.autoIndent  = true
 		}
-		Properties hikariConfigProperties = serverConfig.get("/iolconnect/db", Properties)
+		Properties hikariConfigProperties = serverConfig.get("/iolapi/db", Properties)
 		moduleConfig(
 			HikariModule,
 			new HikariConfig(hikariConfigProperties)

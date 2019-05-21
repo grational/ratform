@@ -12,6 +12,9 @@ html {
 			h1(title)
 		}
 		hr()
+		p {
+			a(href:'query') { yield 'new search' }
+		}
 		table {
 			tr {
 				th('Cliente')
@@ -54,6 +57,9 @@ html {
 					td(entry.clicks)
 				}
 			}
+		}
+		p {
+			a(href:'query') { yield 'new search' }
 		}
 	}
 }

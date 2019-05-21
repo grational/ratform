@@ -20,13 +20,15 @@ import static ratpack.groovy.Groovy.ratpack
 // internal
 import it.italiaonline.grational.ratpack.conf.Proxy
 import it.italiaonline.grational.ratpack.conf.YextApi
-import it.italiaonline.grational.ratpack.conf.IolconnectDb
+import it.italiaonline.grational.ratpack.conf.IppiDb
+import it.italiaonline.grational.ratpack.conf.IolapiDb
 
 ratpack {
 	serverConfig {
 		env()
 		require('/yext/api', YextApi)
-		require('/iolconnect/db', IolconnectDb)
+		require('/iolapi/db', IolapiDb)
+		require('/ippi/db', IppiDb)
 		require("/iol/proxy", Proxy)
 	}
 }
