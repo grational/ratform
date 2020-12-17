@@ -23,24 +23,25 @@ import static groovyx.net.http.ContentTypes.JSON
 import groovyx.net.http.*
 // local
 import it.italiaonline.grational.yext.Analytics
-import it.italiaonline.grational.ratpack.conf.Proxy
+import it.italiaonline.grational.ratpack.conf.IolProxy
 import it.italiaonline.grational.ratpack.conf.YextApi
 import it.italiaonline.grational.ratpack.conf.IolapiDb
+import java.net.Proxy.Type
 
 ratpack {
 
 	handlers {
 		files { dir('static') }
 		prefix('support/yext/google/actions') {
-			get ('query') { YextApi api, Proxy proxy ->
+			get ('query') { YextApi api, IolProxy proxy ->
 				// retrieve the maxDate for the yext analytics
 				Blocking.get {
 					configure {
-						if (proxy.enabled()) {
+						if (proxy.type != Proxy.Type.DIRECT) {
 							execution.proxy(
 								proxy.host,
 								proxy.port,
-								java.net.Proxy.Type.HTTP,
+								proxy.type,
 								true
 							)
 						}
@@ -77,18 +78,20 @@ ratpack {
 				} // then
 			} // get('query')
 
-			get('result') { YextApi api, Sql iolapiDb, Proxy proxy ->
+			get('result') { YextApi api, Sql iolapiDb, IolProxy proxy ->
 				def qp = request.queryParams
 
 				Blocking.get {
 					configure {
-						if (proxy.enabled())
+						if (proxy.type != Proxy.Type.DIRECT) {
 							execution.proxy(
 								proxy.host,
 								proxy.port,
-								java.net.Proxy.Type.HTTP,
+								proxy.type,
 								true
 							)
+						}
+
 						request.uri = "http://as-bo.pgol.net/ws-pg4you/rest/esb/getBoUnicoPg4you?cc=${qp.id}"
 						request.contentType = JSON.first() // 'application/json'
 					
@@ -140,11 +143,11 @@ ratpack {
 
 						Blocking.get {
 							configure {
-								if (proxy.enabled()) {
+								if (proxy.type != Proxy.Type.DIRECT) {
 									execution.proxy(
 										proxy.host,
 										proxy.port,
-										java.net.Proxy.Type.HTTP,
+										proxy.type,
 										true
 									)
 								}

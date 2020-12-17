@@ -2,8 +2,8 @@
 # @parameters: groovy gradle vim sublimetext linux osx
 
 ### Custom ###
-rsc/
-conf/
+/rsc/
+/conf/
 
 ### Linux ###
 *~
